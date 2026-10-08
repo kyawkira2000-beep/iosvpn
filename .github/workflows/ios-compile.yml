@@ -23,7 +23,7 @@ jobs:
         run: |
           git init "$RUNNER_TEMP/cmp-flutter"
           git -C "$RUNNER_TEMP/cmp-flutter" remote add origin https://github.com/flutter/flutter.git
-          git -C "$RUNNER_TEMP/cmp-flutter" fetch --depth 1 origin 058e0af2c2b57e369d905a03ac9748b0ebf543c6
+          git -C "$RUNNER_TEMP/cmp-flutter" fetch --depth 1 origin refs/tags/3.44.8:refs/tags/3.44.8
           git -C "$RUNNER_TEMP/cmp-flutter" checkout --detach FETCH_HEAD
           echo "$RUNNER_TEMP/cmp-flutter/bin" >> "$GITHUB_PATH"
       - name: Install Xcode project tooling
