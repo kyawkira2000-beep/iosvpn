@@ -42,6 +42,7 @@ jobs:
           p = Path('scripts/configure_ios.rb')
           text = p.read_text()
           text = text.replace("    next if target == runner", "    next if target == runner\n    settings['PRODUCT_NAME'] = 'PacketTunnel'")
+          text = text.replace('project.save', "thin = runner.build_phases.find { |phase| phase.respond_to?(:name) && phase.name == 'Thin Binary' }\nif thin\n  runner.build_phases.delete(embed)\n  runner.build_phases.insert(runner.build_phases.index(thin), embed)\nend\nproject.save")
           p.write_text(text)
           PY
           bash scripts/build_ios.sh
