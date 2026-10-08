@@ -1,0 +1,47 @@
+name: CMP VPN iOS compile
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: CMP_VPN-GitHub-ready-20261008
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify and extract source
+        working-directory: .
+        run: |
+          echo "a746aee6add7f9717d5b9db9799b0d87ae72776db9b595538257c819f3dbc397  CMP_VPN-GitHub-ready-20261008.zip" | shasum -a 256 -c -
+          unzip -q CMP_VPN-GitHub-ready-20261008.zip
+      - name: Install pinned Flutter
+        run: |
+          git init "$RUNNER_TEMP/cmp-flutter"
+          git -C "$RUNNER_TEMP/cmp-flutter" remote add origin https://github.com/flutter/flutter.git
+          git -C "$RUNNER_TEMP/cmp-flutter" fetch --depth 1 origin 058e0af2c2b57e369d905a03ac9748b0ebf543c6
+          git -C "$RUNNER_TEMP/cmp-flutter" checkout --detach FETCH_HEAD
+          echo "$RUNNER_TEMP/cmp-flutter/bin" >> "$GITHUB_PATH"
+      - name: Install Xcode project tooling
+        run: gem install --user-install --no-document xcodeproj -v 1.27.0
+      - name: Check application
+        run: |
+          flutter pub get
+          flutter analyze --no-pub
+          flutter test --no-pub test/connection_test.dart test/import_test.dart test/catalog_controller_test.dart test/app_test.dart
+          python3 test/ios_engine_archive_test.py
+          python3 test/ipa_package_test.py
+      - name: Compile iOS and tunnel
+        run: bash scripts/build_ios.sh
+      - name: Package unsigned IPA
+        run: python3 scripts/package_unsigned_ipa.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CMP_VPN-iOS-UNSIGNED
+          path: CMP_VPN-GitHub-ready-20261008/build/ios/export/*
+          if-no-files-found: error
+          retention-days: 7
