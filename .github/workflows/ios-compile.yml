@@ -36,7 +36,15 @@ jobs:
           python3 test/ios_engine_archive_test.py
           python3 test/ipa_package_test.py
       - name: Compile iOS and tunnel
-        run: bash scripts/build_ios.sh
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/configure_ios.rb')
+          text = p.read_text()
+          text = text.replace("    next if target == runner", "    next if target == runner\n    settings['PRODUCT_NAME'] = 'PacketTunnel'")
+          p.write_text(text)
+          PY
+          bash scripts/build_ios.sh
       - name: Package unsigned IPA
         run: python3 scripts/package_unsigned_ipa.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
